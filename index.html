@@ -66,7 +66,6 @@
             position: fixed; top: 0; left: -320px; width: 300px; height: 100%;
             background: var(--bg-surface); z-index: 3000; border-right: 2px solid var(--primary);
             transition: 0.5s cubic-bezier(0.8, 0, 0.2, 1); padding: 90px 20px;
-            overflow-y: auto;
         }
         .sidebar.active { left: 0; box-shadow: 20px 0 100px rgba(0,255,225,0.2); }
 
@@ -143,7 +142,7 @@
         .mod { background: rgba(0,255,225,0.03); padding: 15px; border-radius: 10px; margin-bottom: 15px; border: 1px solid rgba(0,255,225,0.1); }
         .mod-title { font-size: 8px; font-family: var(--font-cyber); color: var(--primary); margin-bottom: 10px; display: block; }
         .prog-bar { width: 100%; height: 3px; background: #000; overflow: hidden; }
-        .prog-fill { height: 100%; background: var(--primary); box-shadow: 0 0 10px var(--primary); transition: 0.5s ease; }
+        .prog-fill { height: 100%; background: var(--primary); box-shadow: 0 0 10px var(--primary); }
 
         .corner-decor { position: fixed; width: 60px; height: 60px; pointer-events: none; z-index: 5; border-color: var(--primary); border-style: solid; opacity: 0.5; }
         .top-left { top: 80px; left: 10px; border-width: 3px 0 0 3px; }
@@ -184,26 +183,6 @@
                     <span id="target-per">0%</span>
                 </div>
                 <div class="prog-bar"><div id="target-fill" class="prog-fill"></div></div>
-            </div>
-
-            <div class="mod">
-                <span class="mod-title">CORE HEALTH</span>
-                <div style="font-family: var(--font-mono); font-size: 10px; line-height: 1.8;">
-                    <div style="display:flex; justify-content:space-between; cursor:default;" title="Real-time Memory Load">
-                        <span>MEM LOAD:</span>
-                        <span id="mem-val" style="color: var(--primary);">0%</span>
-                    </div>
-                    <div class="prog-bar" style="height: 2px; margin-bottom: 8px;"><div id="mem-fill" class="prog-fill" style="width: 0%;"></div></div>
-                    
-                    <div style="display:flex; justify-content:space-between; cursor:pointer;" onclick="reScan('sig-status')">
-                        <span>SIGNAL:</span>
-                        <span id="sig-status" style="color: var(--success);">SECURE</span>
-                    </div>
-                    <div style="display:flex; justify-content:space-between; cursor:pointer;" onclick="reScan('fw-status')">
-                        <span>FIREWALL:</span>
-                        <span id="fw-status" style="color: var(--success);">ACTIVE</span>
-                    </div>
-                </div>
             </div>
         </div>
 
@@ -278,7 +257,6 @@
             rate: parseInt(localStorage.getItem('TITAN_RATE')) || 1000,
             chart: null,
             boot: Date.now(),
-            memLoad: 0,
 
             init() {
                 particlesJS('particles-js', { particles: { number: { value: 40 }, color: { value: '#00ffe1' }, shape: { type: 'circle' }, opacity: { value: 0.2 }, size: { value: 2 }, line_linked: { enable: true, distance: 150, color: '#00ffe1', opacity: 0.1, width: 1 }, move: { enable: true, speed: 0.5 } } });
@@ -296,22 +274,12 @@
                 const diff = Math.floor((Date.now() - this.boot) / 1000);
                 const h = Math.floor(diff/3600).toString().padStart(2,'0'), m = Math.floor((diff%3600)/60).toString().padStart(2,'0'), s = (diff%60).toString().padStart(2,'0');
                 document.getElementById('uptime').innerText = `${h}:${m}:${s}`;
-                
-                // Logic Memory: naik perlahan, sesekali turun
-                const targetMem = 10 + (Math.sin(diff/5) * 5) + (this.db.length * 0.5);
-                this.memLoad = Math.min(99.9, targetMem + Math.random());
-                document.getElementById('mem-val').innerText = this.memLoad.toFixed(1) + '%';
-                document.getElementById('mem-fill').style.width = this.memLoad + '%';
             },
 
             tx(type) {
                 const val = parseFloat(document.getElementById('unitInp').value);
                 const currentRate = parseInt(document.getElementById('rateInp').value) || 0;
                 if(!val || val <= 0) return;
-                
-                // Spike memory saat transaksi
-                this.memLoad += 15; 
-                
                 this.db.push({ id: Date.now(), amt: type === 'in' ? val : -val, rateAtTime: currentRate, ts: new Date().toISOString() });
                 localStorage.setItem('TITAN_DATA', JSON.stringify(this.db));
                 document.getElementById('unitInp').value = '';
@@ -342,7 +310,7 @@
                 document.getElementById('dayIn').innerText = dIn.toLocaleString();
                 document.getElementById('dayOut').innerText = dOut.toLocaleString();
 
-                // Render Analytics Page
+                // Render Analytics Page (The 4 Widgets)
                 document.getElementById('avgRate').innerText = "Rp " + (buyCount > 0 ? Math.round(rateSum/buyCount) : 0).toLocaleString();
                 document.getElementById('txCount').innerText = txCount;
                 document.getElementById('monthlyVol').innerText = mVol.toLocaleString() + " BGL";
@@ -373,18 +341,6 @@
 
             del(id) { if(confirm("DELETE?")) { this.db = this.db.filter(x => x.id !== id); localStorage.setItem('TITAN_DATA', JSON.stringify(this.db)); this.render(); } }
         };
-
-        // Fungsi interaktif baru untuk status keamanan
-        function reScan(elementId) {
-            const el = document.getElementById(elementId);
-            const originalText = el.innerText;
-            el.innerText = "SCANNING...";
-            el.style.color = "var(--primary)";
-            setTimeout(() => {
-                el.innerText = originalText;
-                el.style.color = "var(--success)";
-            }, 1500);
-        }
 
         function switchPage(p) {
             document.querySelectorAll('.main-container').forEach(m => m.classList.remove('active'));
