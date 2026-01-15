@@ -1,0 +1,17 @@
+{
+  "name": "BGL TITAN OS",
+  "short_name": "TITAN",
+  "description": "Ultra Cybernetic Asset Terminal",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#010305",
+  "theme_color": "#00ffe1",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/2092/2092063.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
