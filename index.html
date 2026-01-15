@@ -371,5 +371,65 @@
         function factoryReset() { if(confirm("ERASE CORE DATABASE?")) { localStorage.clear(); location.reload(); } }
         window.onload = () => TITAN.init();
     </script>
+    <div id="backup-section" style="margin: 20px auto; padding: 15px; max-width: 500px; border: 1px dashed #00f3ff; border-radius: 8px; text-align: center; background: rgba(0, 0, 0, 0.5);">
+    <h3 style="color: #00f3ff; font-family: 'Orbitron', sans-serif; font-size: 0.9rem; margin-bottom: 15px;">TITAN DATABASE SYSTEM</h3>
+    
+    <div style="display: flex; gap: 10px; justify-content: center;">
+        <button onclick="exportBackup()" style="background: transparent; color: #00f3ff; border: 1px solid #00f3ff; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-family: 'Orbitron', sans-serif; font-size: 0.7rem; font-weight: bold; transition: 0.3s;">
+            DOWNLOAD BACKUP
+        </button>
+
+        <label for="import-file" style="background: #00f3ff; color: #000; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-family: 'Orbitron', sans-serif; font-size: 0.7rem; font-weight: bold; transition: 0.3s;">
+            RESTORE DATA
+        </label>
+        <input type="file" id="import-file" style="display: none;" accept=".json" onchange="importBackup(event)">
+    </div>
+</div>
+
+<script>
+// Fungsi untuk mengambil data dan menjadikannya file yang bisa didownload
+function exportBackup() {
+    const data = localStorage.getItem('TITAN.db'); // Mengambil data dari database lokal kamu
+    if (!data) {
+        alert("Belum ada data transaksi untuk dibackup.");
+        return;
+    }
+    const blob = new Blob([data], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const date = new Date().toISOString().slice(0, 10);
+    a.href = url;
+    a.download = `TITAN_BACKUP_${date}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
+// Fungsi untuk membaca file backup dan memasukkannya ke database web
+function importBackup(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            const content = e.target.result;
+            // Validasi sederhana apakah formatnya benar
+            JSON.parse(content); 
+            
+            if (confirm("HATI-HATI: Data saat ini akan diganti dengan data dari file backup. Lanjutkan?")) {
+                localStorage.setItem('TITAN.db', content);
+                alert("Data Berhasil di-Restore! Halaman akan dimuat ulang.");
+                location.reload();
+            }
+        } catch (err) {
+            alert("File tidak valid! Pastikan kamu mengunggah file .json hasil backup sebelumnya.");
+        }
+    };
+    reader.readAsText(file);
+}
+</script>
 </body>
+
 </html>
