@@ -66,6 +66,7 @@
             position: fixed; top: 0; left: -320px; width: 300px; height: 100%;
             background: var(--bg-surface); z-index: 3000; border-right: 2px solid var(--primary);
             transition: 0.5s cubic-bezier(0.8, 0, 0.2, 1); padding: 90px 20px;
+            overflow-y: auto;
         }
         .sidebar.active { left: 0; box-shadow: 20px 0 100px rgba(0,255,225,0.2); }
 
@@ -142,7 +143,7 @@
         .mod { background: rgba(0,255,225,0.03); padding: 15px; border-radius: 10px; margin-bottom: 15px; border: 1px solid rgba(0,255,225,0.1); }
         .mod-title { font-size: 8px; font-family: var(--font-cyber); color: var(--primary); margin-bottom: 10px; display: block; }
         .prog-bar { width: 100%; height: 3px; background: #000; overflow: hidden; }
-        .prog-fill { height: 100%; background: var(--primary); box-shadow: 0 0 10px var(--primary); }
+        .prog-fill { height: 100%; background: var(--primary); box-shadow: 0 0 10px var(--primary); transition: 0.5s; }
 
         .corner-decor { position: fixed; width: 60px; height: 60px; pointer-events: none; z-index: 5; border-color: var(--primary); border-style: solid; opacity: 0.5; }
         .top-left { top: 80px; left: 10px; border-width: 3px 0 0 3px; }
@@ -183,6 +184,26 @@
                     <span id="target-per">0%</span>
                 </div>
                 <div class="prog-bar"><div id="target-fill" class="prog-fill"></div></div>
+            </div>
+
+            <div class="mod">
+                <span class="mod-title">SYSTEM STATUS</span>
+                <div style="font-family: var(--font-mono); font-size: 10px; line-height: 1.8;">
+                    <div style="display:flex; justify-content:space-between;">
+                        <span>MEM LOAD:</span>
+                        <span id="mem-val" style="color: var(--primary);">24%</span>
+                    </div>
+                    <div class="prog-bar" style="height: 2px; margin-bottom: 8px;"><div id="mem-fill" class="prog-fill" style="width: 24%;"></div></div>
+                    
+                    <div style="display:flex; justify-content:space-between;">
+                        <span>SIGNAL:</span>
+                        <span style="color: var(--success);">ENCRYPTED</span>
+                    </div>
+                    <div style="display:flex; justify-content:space-between;">
+                        <span>FIREWALL:</span>
+                        <span style="color: var(--success);">ACTIVE</span>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -274,6 +295,11 @@
                 const diff = Math.floor((Date.now() - this.boot) / 1000);
                 const h = Math.floor(diff/3600).toString().padStart(2,'0'), m = Math.floor((diff%3600)/60).toString().padStart(2,'0'), s = (diff%60).toString().padStart(2,'0');
                 document.getElementById('uptime').innerText = `${h}:${m}:${s}`;
+                
+                // Animasi Memory Load dummy
+                const mem = 20 + Math.floor(Math.random() * 15);
+                document.getElementById('mem-val').innerText = mem + '%';
+                document.getElementById('mem-fill').style.width = mem + '%';
             },
 
             tx(type) {
@@ -370,64 +396,6 @@
         function tx(t) { TITAN.tx(t); }
         function factoryReset() { if(confirm("ERASE CORE DATABASE?")) { localStorage.clear(); location.reload(); } }
         window.onload = () => TITAN.init();
-   <div id="backup-section" style="margin: 40px auto; padding: 20px; max-width: 500px; border: 1px dashed #00f3ff; border-radius: 12px; text-align: center; background: rgba(0, 255, 225, 0.05); position: relative; z-index: 10;">
-        <h3 style="color: #00f3ff; font-family: 'Orbitron', sans-serif; font-size: 0.9rem; margin-bottom: 15px; letter-spacing: 2px;">TITAN DATABASE SYSTEM</h3>
-        
-        <div style="display: flex; gap: 10px; justify-content: center;">
-            <button onclick="exportBackup()" style="background: transparent; color: #00f3ff; border: 1px solid #00f3ff; padding: 10px 15px; border-radius: 5px; cursor: pointer; font-family: 'Orbitron', sans-serif; font-size: 0.7rem; font-weight: bold; transition: 0.3s; box-shadow: 0 0 10px rgba(0,255,225,0.2);">
-                DOWNLOAD BACKUP
-            </button>
-
-            <label for="import-file" style="background: #00f3ff; color: #000; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer; font-family: 'Orbitron', sans-serif; font-size: 0.7rem; font-weight: bold; transition: 0.3s; box-shadow: 0 0 15px rgba(0,255,225,0.4);">
-                RESTORE DATA
-            </label>
-            <input type="file" id="import-file" style="display: none;" accept=".json" onchange="importBackup(event)">
-        </div>
-        <p style="font-size: 8px; color: #555; margin-top: 10px; font-family: var(--font-mono);">SECURE ENCRYPTED STORAGE PROTOCOL V2.5</p>
-    </div>
-
-    <script>
-    function exportBackup() {
-        // Nama database disesuaikan dengan TITAN_DATA agar sinkron
-        const data = localStorage.getItem('TITAN_DATA'); 
-        if (!data || data === '[]') {
-            alert("Sistem: Gagal. Tidak ada data transaksi untuk dibackup.");
-            return;
-        }
-        const blob = new Blob([data], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        const date = new Date().toISOString().slice(0, 10);
-        a.href = url;
-        a.download = `TITAN_BACKUP_${date}.json`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-    }
-
-    function importBackup(event) {
-        const file = event.target.files[0];
-        if (!file) return;
-
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            try {
-                const content = e.target.result;
-                JSON.parse(content); // Validasi format JSON
-                
-                if (confirm("PERINGATAN: Restore data akan menghapus data transaksi saat ini di perangkat ini. Lanjutkan?")) {
-                    localStorage.setItem('TITAN_DATA', content); // Simpan ke database yang benar
-                    alert("Sistem: Data Berhasil di-Restore!");
-                    location.reload();
-                }
-            } catch (err) {
-                alert("Gagal: File backup tidak valid atau rusak.");
-            }
-        };
-        reader.readAsText(file);
-    }
     </script>
 </body>
 </html>
-
